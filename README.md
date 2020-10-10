@@ -1,6 +1,6 @@
 # Advances in Financial Machine Learning 
 
-**AFML**
+![book](img/img1.png)
 
 <pre>
 Name : Yoontae hwang
