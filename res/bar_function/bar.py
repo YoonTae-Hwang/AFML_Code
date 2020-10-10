@@ -62,7 +62,7 @@ def volume_bars(df, volum_col, n):
 ################################################
 
 
-############### 3. Volume Bars ####################
+############### 3. dollar Bars ####################
 def dollar_bars(df, dollar_col, n):
     '''
     :param df: pd.Dataframe := Tick data set
@@ -126,4 +126,71 @@ def plot_sample_data(ref, sub, bar_type, *args, **kwds):
 
     return
 
+################################################
+
+############### 6. Tick Imbalance bar ####################
+#Using jit
+@jit(nopython = True)
+def numba_isclose(a, b,
+                  rel_tol : float = 1e-09,
+                  abs_tol : float = 0.0):
+    """
+    :param a: price at time t
+    :param b: price at time t-1
+    :param rel_tol: rel_tol
+    :param abs_tol: abs_tol
+    :return: Bool 
+    """
+    return np.fabs(a-b) <= np.fmax(rel_tol * np.fmax(np.fabs(a), np.fabs(b)),
+                                   abs_tol)
+
+@jit(nopython = True)
+def bt(p0, p1, b0):
+    """
+    bt is tick rule defines a sequence b_{t} 
+    :param p0: price associated with tick time t-1
+    :param p1: price associated with tick time t
+    :param b0: tick rule defines a sequence b_{t}..
+    :return: b := tick rule
+    """
+    
+    if numba_isclose((p1-p0), 0.0, abs_tol= 0.001):
+        b = b0 #same price p1 = p0
+        return b
+    else:
+        b = np.abs(p1 - p0) / (p1 - p0) #p1 != p0
+        return b
+    
+@jit(nopython= True)
+def get_imbalance(t):
+    """
+    :param t: price data
+    :return: imbalance dataset *remove last value
+    """
+    
+    bs = np.zeros_like(t)
+    for i in np.arange(1, bs.shape[0]):
+        t_bt = bt(t[i-1], t[i], bs[i-1])
+        bs[i-1] = t_bt
+    return bs[:-1] 
+    
+@jit(nopython= True)
+def test_t_abs(abs_Theta, t, E_bs):
+    """
+    (abs_Theta >= t * E_bs)
+    :param abs_Theta: tick imbalance at time T 
+    :param t:  time T
+    :param E_bs:  expected value of theta T
+    :return: bool
+    """
+    return (abs_Theta >= t * E_bs)
+
+def agg_imbalance_bars_(df):
+    """
+    수정중
+    :param df: 
+    :return: 
+    """
+    
+    return None
 ################################################
